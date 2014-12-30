@@ -18,6 +18,8 @@ import com.kinvey.android.AsyncAppData;
 import com.kinvey.android.Client;
 import com.kinvey.android.callback.KinveyListCallback;
 import com.kinvey.android.callback.KinveyPingCallback;
+import com.kinvey.android.callback.KinveyUserCallback;
+import com.kinvey.java.User;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +33,8 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     List<Books> booksListArray = new ArrayList<Books>();
     Client mKinveyClient;
     AsyncAppData<Books> myBooks;
+    BooksAdapter booksAdapter;
+
 
 
     @Override
@@ -43,6 +47,16 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
 
         mKinveyClient = new Client.Builder("kid_WyE5rmap_", "b5f06467ecea486096b5e47104e4e098", getApplicationContext()).build();
 
+        mKinveyClient.user().login(new KinveyUserCallback() {
+            @Override
+            public void onFailure(Throwable error) {
+                Log.e(TAG, "Login Failure", error);
+            }
+            @Override
+            public void onSuccess(User result) {
+                Log.i(TAG,"Logged in a new implicit user with id: " + result.getId());
+            }
+        });
         /*
         mKinveyClient.ping(new KinveyPingCallback() {
             public void onFailure(Throwable t) {
@@ -58,7 +72,8 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
 
         updateButton.setOnClickListener(this);
 
-        bookListView.setAdapter(new BooksAdapter());
+        booksAdapter = new BooksAdapter();
+        bookListView.setAdapter(booksAdapter);
 
     }
 
@@ -69,12 +84,17 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         myBooks.get(new KinveyListCallback<Books>() {
             @Override
             public void onSuccess(Books[] bookses) {
+
                 Log.e(TAG, "received" + bookses.length);
+                booksListArray.clear();
+                for (int i=0; i < bookses.length; i++)
+                    booksListArray.add(bookses[i]);
+                booksAdapter.notifyDataSetChanged();
             }
 
             @Override
             public void onFailure(Throwable throwable) {
-                Log.e(TAG, "failed");
+                Log.e(TAG, "failed", throwable);
 
             }
         });
